@@ -387,7 +387,10 @@ export function SessionTurn(
   const responsePartId = createMemo(() => lastTextPart()?.id)
   const messageDiffs = createMemo(() => message()?.summary?.diffs ?? emptyDiffs)
   const hasDiffs = createMemo(() => messageDiffs().length > 0)
-  const hideResponsePart = createMemo(() => !working() && !!responsePartId())
+  // Relocate the answer text out of the collapsed steps and into the top-level
+  // Response block ALWAYS (not just after finishing), so it streams live like a
+  // chat message instead of appearing only once the turn completes.
+  const hideResponsePart = createMemo(() => !!responsePartId())
 
   const [copied, setCopied] = createSignal(false)
 
@@ -650,7 +653,7 @@ export function SessionTurn(
                     </div>
                     {/* Response */}
                     <Show when={props.stepsExpanded && assistantMessages().length > 0}>
-                      <div data-slot="session-turn-collapsible-content-inner" aria-hidden={working()}>
+                      <div data-slot="session-turn-collapsible-content-inner" aria-live="off">
                         <For each={assistantMessages()}>
                           {(assistantMessage) => (
                             <AssistantMessageItem
@@ -678,8 +681,8 @@ export function SessionTurn(
                     <div class="sr-only" aria-live="polite">
                       {!working() && response() ? response() : ""}
                     </div>
-                    <Show when={!working() && (response() || hasDiffs())}>
-                      <div data-slot="session-turn-summary-section">
+                    <Show when={response() || hasDiffs()}>
+                      <div data-slot="session-turn-summary-section" data-streaming={working() && !!response()}>
                         <div data-slot="session-turn-summary-header">
                           <h2 data-slot="session-turn-summary-title">{i18n.t("ui.sessionTurn.summary.response")}</h2>
                           <div data-slot="session-turn-response">
