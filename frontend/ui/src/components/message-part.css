@@ -78,8 +78,8 @@
     overflow: hidden;
     background: var(--surface-weak);
     border: 1px solid var(--border-weak-base);
-    padding: 8px 12px;
-    border-radius: 4px;
+    padding: 10px 14px;
+    border-radius: 14px;
 
     [data-highlight="file"] {
       color: var(--syntax-property);

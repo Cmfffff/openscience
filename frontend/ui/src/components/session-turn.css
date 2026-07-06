@@ -222,6 +222,10 @@
     [data-slot="session-turn-response"] {
       position: relative;
       width: 100%;
+      border: 1px solid var(--border-weak-base);
+      border-radius: 14px;
+      padding: 16px 18px;
+      background: var(--surface-raised-base);
     }
 
     [data-slot="session-turn-response-copy-wrapper"] {
@@ -243,13 +247,10 @@
     }
   }
 
+  /* The answer is obviously the answer in a chat layout — drop the "RESPONSE"
+     eyebrow so the assistant bubble reads cleanly. */
   [data-slot="session-turn-summary-title"] {
-    font-size: var(--font-size-x-small);
-    font-weight: var(--font-weight-regular);
-    font-style: normal;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-weaker);
+    display: none;
   }
 
   [data-slot="session-turn-markdown"],
