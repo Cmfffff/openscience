@@ -160,7 +160,7 @@ Common commands:
 adata = ad.concat(
     [adata1, adata2, adata3],
     axis=0,
-    join='inner',
+    join='outer',
     label='batch',
     keys=['batch1', 'batch2', 'batch3']
 )
@@ -217,7 +217,6 @@ Follow recommended patterns for memory efficiency, performance, and reproducibil
 - Views vs copies
 - Data storage optimization
 - Performance optimization
-- Working with raw data
 - Metadata management
 - Reproducibility
 - Error handling
@@ -301,8 +300,8 @@ adata.obs['n_counts'] = adata.X.sum(axis=1)
 adata = adata[adata.obs['n_genes'] > 200]
 adata = adata[adata.obs['n_counts'] < 50000]
 
-# 3. Store raw
-adata.raw = adata.copy()
+# 3. Store counts layers
+adata.layers['counts'] = adata.X.copy()
 
 # 4. Normalize and filter
 sc.pp.normalize_total(adata, target_sum=1e4)
@@ -326,7 +325,7 @@ adata = ad.concat(
     [adata1, adata2, adata3],
     label='batch',
     keys=['batch1', 'batch2', 'batch3'],
-    join='inner'
+    join='outer'
 )
 
 # Apply batch correction
