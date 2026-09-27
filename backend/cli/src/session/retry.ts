@@ -319,8 +319,20 @@ export namespace SessionRetry {
     }
   }
 
+  /** The code a turn's balance check pauses with when it could not reach the
+   * Wallet: the connection, the gateway, or its answer failed. */
+  export const BALANCE_UNVERIFIED = "balance_unverified"
+
+  /** A balance check that could not reach the Wallet. Nothing was sent to a
+   * model, so the step waits for the connection under the same time budget
+   * as a Wallet wait instead of spending five quick retries on an outage. */
+  export function balanceWait(error: ReturnType<NamedError["toObject"]>) {
+    return MessageV2.APIError.isInstance(error) && error.data.metadata?.code === BALANCE_UNVERIFIED
+  }
+
   export function retryable(error: ReturnType<NamedError["toObject"]>) {
     if (isContextOverflow(error)) return undefined
+    if (balanceWait(error)) return "Waiting for the connection to check the Wallet balance"
     const normalized = normalizeProviderError(error)
     // The gateway cannot prove whether the provider accepted this request, or
     // has sealed its answer. Never redispatch it, even if the SDK's generic

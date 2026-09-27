@@ -343,6 +343,28 @@ describe("SessionProcessor.providerFailureAction", () => {
     expect(SessionRetry.walletWait(apiError({ "retry-after": "1" }))).toBe(false)
   })
 
+  test("a balance check that cannot reach the Wallet waits for the connection instead of pausing the turn", () => {
+    const unverified = MessageV2.fromError(
+      SessionProcessor.managedPauseError("could not verify the balance", SessionRetry.BALANCE_UNVERIFIED),
+      { providerID: "openrouter" },
+    )
+    expect(SessionRetry.balanceWait(unverified)).toBe(true)
+    expect(SessionRetry.retryable(unverified)).toBe("Waiting for the connection to check the Wallet balance")
+    // Past the five transient retries the wait goes on, until the Wallet budget.
+    const start = 1_000_000
+    expect(
+      SessionProcessor.consumeProviderRetry(
+        { attempt: 5, transientRetries: 5 },
+        { wait: SessionRetry.balanceWait(unverified), now: start },
+      ),
+    ).toEqual({ attempt: 6, transientRetries: 5, waitingSince: start })
+    // A pause that needs the person, such as a funding account to sign in to, is not waited out.
+    const snapshot = MessageV2.fromError(SessionProcessor.managedPauseError("sign in again"), {
+      providerID: "openrouter",
+    })
+    expect(SessionRetry.balanceWait(snapshot)).toBe(false)
+  })
+
   test.each([400, 200, 503])("never retries gateway timeout under HTTP %s or SSE", (statusCode) => {
     const body = JSON.stringify({
       error: {

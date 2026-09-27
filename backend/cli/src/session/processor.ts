@@ -90,12 +90,12 @@ export namespace SessionProcessor {
     return text.length > 600 ? `${text.slice(0, 597)}...` : text
   }
 
-  export function managedPauseError(message: string) {
+  export function managedPauseError(message: string, code?: string) {
     return new MessageV2.APIError({
       message,
       statusCode: 503,
       isRetryable: true,
-      metadata: { openscience_state: "paused", action: "retry" },
+      metadata: { openscience_state: "paused", action: "retry", ...(code ? { code } : {}) },
     })
   }
 
@@ -339,9 +339,10 @@ export namespace SessionProcessor {
   }
 
   /** How long a step may wait for this Wallet's own requests in flight (or a
-   * reload) before giving up. Nothing was dispatched on those refusals, so
-   * the wait costs nothing but time; five fixed retries ended real turns on
-   * small Wallets while their workers were still finishing. */
+   * reload), or for the connection its balance check needs, before giving
+   * up. Nothing was dispatched in either case, so the wait costs nothing but
+   * time; five fixed retries ended real turns on small Wallets while their
+   * workers were still finishing, and paused one after a minute offline. */
   export const WALLET_WAIT_BUDGET_MS = 10 * 60_000
 
   export function consumeProviderRetry(
@@ -1001,6 +1002,7 @@ export namespace SessionProcessor {
               if (balance === null) {
                 throw managedPauseError(
                   "Ace is paused because OpenScience could not verify the current balance. Retry when the connection returns or switch to a direct provider or local model.",
+                  SessionRetry.BALANCE_UNVERIFIED,
                 )
               }
               if (balance <= 0) {
@@ -1461,7 +1463,7 @@ export namespace SessionProcessor {
               if (action.type === "retry") {
                 const retry = consumeProviderRetry(
                   { attempt, transientRetries, waitingSince },
-                  { wait: SessionRetry.walletWait(error) },
+                  { wait: SessionRetry.walletWait(error) || SessionRetry.balanceWait(error) },
                 )
                 if (retry) {
                   attempt = retry.attempt

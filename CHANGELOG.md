@@ -300,6 +300,16 @@ public 50 the old detector named an example's `samples.csv` and the input
 
 ### Fixed
 
+- **A dropped connection no longer pauses an Ace turn after a minute.** A
+  turn checks the Wallet balance before it sends anything, and a check that
+  could not reach the Wallet spent the five quick retries meant for provider
+  errors and then stopped with "Ace is paused because OpenScience could not
+  verify the current balance". Nothing has been sent at that point, so the
+  turn now waits for the connection under the Wallet's ten-minute budget,
+  saying so in its status, and carries on when the check succeeds. A failed
+  check now logs why (the HTTP status, a timeout, or the network error and
+  its code), and the desktop app keeps the logs of the last five runs rather
+  than one.
 - **Connected MCP tools no longer grow memory on every step.** Each agent step compiled a fresh input validator for every tool of every connected MCP server and kept all of them for the life of the process. A schema is now compiled once and reused.
 
 - **The Amazon S3 connector preset can be saved.** Its reviewed endpoint carried `?oauth=initialize`, which the remote connector check rejects as query data, so saving the preset failed with a validation error. It now uses AWS's plain endpoint, which starts the same AWS sign-in through MCP OAuth discovery.
