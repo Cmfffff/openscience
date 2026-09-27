@@ -300,6 +300,8 @@ public 50 the old detector named an example's `samples.csv` and the input
 
 ### Fixed
 
+- **The Amazon S3 connector preset can be saved.** Its reviewed endpoint carried `?oauth=initialize`, which the remote connector check rejects as query data, so saving the preset failed with a validation error. It now uses AWS's plain endpoint, which starts the same AWS sign-in through MCP OAuth discovery.
+
 - **A `{file:…}` config reference keeps the file's dollar signs.** The
   included text was spliced in with a string replacement, so an agent prompt
   read from `{file:prompt.md}` lost half of every `$$` (display math became
