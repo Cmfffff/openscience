@@ -8,7 +8,7 @@ import { useMeta } from "@/components/Meta"
 import { ProviderRow } from "@/components/ProviderMark"
 import Workspace from "@/components/Workspace"
 import { BENCHMARKS } from "@/data/benchmarks"
-import { NUMBERS } from "@/data/benchmark"
+import { NUMBERS, OSB } from "@/data/benchmark"
 import { DOCS, GITHUB, LICENSE, SYNTHETIC_SCIENCES, docs } from "@/data/links"
 
 /* Install command per tab. `highlight` is the part set in ink. */
@@ -280,8 +280,9 @@ export default function Landing() {
                   OpenScience scores <strong>{NUMBERS.tbs_pct}%</strong> on Terminal-Bench Science, {NUMBERS.tbs_margin}{" "}
                   above Codex with the same model; <strong>{NUMBERS.tb4_pct}%</strong> on Terminal-Bench 4.0 (science),
                   ahead of all {NUMBERS.lb4_n} public entries; and <strong>{NUMBERS.bio_mean}</strong> on
-                  BiomniBench-DA, ahead of {NUMBERS.bio_other_short}, OmicOS, and Claude Code. See the{" "}
-                  <a href="/benchmark">benchmark report</a>.
+                  BiomniBench-DA, ahead of {NUMBERS.bio_other_short}, OmicOS, and Claude Code. On OpenScience Bench,
+                  which measures end-to-end scientific research, it scores <strong>{OSB.rows[0].value}%</strong> pass@3,
+                  ahead of Claude Science, K-Dense, and Codex. See the <a href="/benchmark">benchmark report</a>.
                 </p>
               </div>
               <div data-component="benchmarks">

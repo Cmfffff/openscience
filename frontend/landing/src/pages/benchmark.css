@@ -216,8 +216,7 @@
   /* Stats strip -------------------------------------------------------- */
   [data-slot="stats"] {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    max-width: var(--col);
+    grid-template-columns: repeat(4, 1fr);
     margin: 2.4rem auto 0;
     background: var(--plate);
     border: 1px solid var(--rule);
@@ -290,15 +289,17 @@
         color: var(--ink-2);
       }
     }
-    @media (max-width: 600px) {
-      grid-template-columns: 1fr;
+    @media (max-width: 760px) {
+      grid-template-columns: repeat(2, 1fr);
       [data-slot="bench"],
       [data-slot="compare"] {
         white-space: normal;
       }
-      [data-slot="stat"] + [data-slot="stat"] {
+      [data-slot="stat"]:nth-child(3) {
         border-left: 0;
-        border-top: 1px solid var(--rule);
+      }
+      [data-slot="stat"]:nth-child(-n + 2) {
+        border-bottom: 1px solid var(--rule);
       }
     }
   }

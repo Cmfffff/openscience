@@ -1,5 +1,5 @@
 import type { Benchmark } from "@/data/benchmarks"
-import { BIO_TASKS, NUMBERS, TB4_BEST, TBS_DOMAINS } from "@/data/benchmark"
+import { BIO_TASKS, NUMBERS, OSB, TB4_BEST, TBS_DOMAINS, type Harness } from "@/data/benchmark"
 
 /* Three figures in one chart language, after the terminal-bench-science.ai
    view: a light grid, quiet ticks, ochre square markers for other agents,
@@ -99,15 +99,25 @@ function Domains() {
   )
 }
 
-/* Terminal-Bench 4.0 (science): the best public entry of each harness. */
-function Comparison() {
-  const rows = TB4_BEST
+/* Ranked bars: Terminal-Bench 4.0 (science) by best entry per harness, and
+   OpenScience Bench. */
+function Comparison({
+  rows,
+  max,
+  ticks,
+  label,
+}: {
+  rows: readonly { name: string; value: number; harness: Harness }[]
+  max: number
+  ticks: number[]
+  label: string
+}) {
   const slot = (R - L) / rows.length
   const bar = slot * 0.46
-  const sy = (v: number) => B - (v / 80) * (B - T)
+  const sy = (v: number) => B - (v / max) * (B - T)
   return (
     <>
-      <Frame xs={[]} ys={[20, 40, 60].map((v) => [sy(v), `${v}%`])} xLabel="" yLabel="solved, best entry" />
+      <Frame xs={[]} ys={ticks.map((v) => [sy(v), `${v}%`])} xLabel="" yLabel={label} />
       {rows.map((row, i) => {
         const mine = row.harness === "os"
         const x = L + slot * i + (slot - bar) / 2
@@ -192,7 +202,17 @@ export function BenchmarkFigure({ benchmark, index }: { benchmark: Benchmark; in
           aria-label={`${benchmark.name}: OpenScience ${benchmark.score}${benchmark.unit}`}
         >
           {benchmark.chart === "domains" ? <Domains /> : null}
-          {benchmark.chart === "ranked" ? <Comparison /> : null}
+          {benchmark.chart === "ranked" ? (
+            <Comparison rows={TB4_BEST} max={80} ticks={[20, 40, 60]} label="solved, best entry" />
+          ) : null}
+          {benchmark.chart === "openscience-bench" ? (
+            <Comparison
+              rows={OSB.rows.map((row) => ({ ...row, name: row.name.replace(" (BYOK)", "") }))}
+              max={60}
+              ticks={[20, 40]}
+              label="solved, pass@3"
+            />
+          ) : null}
           {benchmark.chart === "distribution" ? <Dots /> : null}
         </svg>
       </div>
@@ -202,7 +222,10 @@ export function BenchmarkFigure({ benchmark, index }: { benchmark: Benchmark; in
           {benchmark.score}
           {benchmark.unit}
         </strong>
-        <a href={benchmark.href} target="_blank" rel="noreferrer">
+        <a
+          href={benchmark.href}
+          {...(benchmark.href.startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})}
+        >
           {benchmark.name}
         </a>
       </span>

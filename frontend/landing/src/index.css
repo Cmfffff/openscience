@@ -993,16 +993,16 @@ pre {
   /* Benchmarks, laid out like opencode.ai's growth figures ---------------- */
   [data-component="benchmarks"] {
     margin: 48px 0 0;
-    display: flex;
-    gap: 40px;
 
-    @media (max-width: 60rem) {
-      gap: 48px;
-      margin-left: 0;
+    &[data-component] {
+      display: grid;
     }
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 56px 64px;
+
     @media (max-width: 40rem) {
-      flex-direction: column;
-      gap: 32px;
+      grid-template-columns: 1fr;
+      gap: 40px;
     }
 
     [data-component="benchmark"] {

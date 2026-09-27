@@ -96,43 +96,19 @@ export const BIO_BOARD: readonly BoardRow[] = [
   { name: "Biomni", model: "DeepSeek V4 Pro", value: 62.6, harness: "oth" },
 ]
 
-/** Figure 8: three benchmarks whose results are still coming in. Add rows
- * when they are final; an empty list draws the frame with a note. */
-export type PendingBenchmark = {
-  id: string
-  title: string
-  metric: string
-  max: number
-  about: string
-  rows: readonly BoardRow[]
-}
-
-export const PENDING: readonly PendingBenchmark[] = [
-  {
-    id: "openscience-bench",
-    title: "OpenScience Bench",
-    metric: "score (%)",
-    max: 100,
-    about: "Our internal benchmark.",
-    rows: [],
-  },
-  {
-    id: "researchclawbench",
-    title: "ResearchClawBench",
-    metric: "rubric score",
-    max: 100,
-    about: "40 tasks in 10 domains, each built on a published paper that is hidden during evaluation.",
-    rows: [],
-  },
-  {
-    id: "bixbench-3",
-    title: "BixBench 3",
-    metric: "score (%)",
-    max: 100,
-    about: "v1.0.0, 20 tasks, native Inspect AI environment with host-side artifact grading.",
-    rows: [],
-  },
-]
+/** OpenScience Bench: end-to-end scientific research, pass@3 for every entry. */
+export const OSB = {
+  metric: "pass@3",
+  rows: [
+    { name: "OpenScience", model: "GPT-6 Astra", value: 47.3, harness: "os" },
+    { name: "Claude Science", model: "Fable 5.1", value: 40.6, harness: "cc" },
+    { name: "K-Dense (BYOK)", model: "GPT-6 Astra", value: 40.3, harness: "oth" },
+    { name: "Codex", model: "GPT-6 Astra", value: 38.1, harness: "codex" },
+    { name: "Grok Build", model: "Grok 4.7", value: 12.2, harness: "oth" },
+  ] satisfies BoardRow[],
+  margin: 6.7,
+  other_short: "Claude Science",
+} as const
 
 export const TRACES = "https://github.com/synthetic-sciences/benchmarks-openscience"
 

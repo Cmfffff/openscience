@@ -3,7 +3,7 @@ import { CopyStatus, useCopy } from "@/components/Copy"
 import { Footer } from "@/components/Footer"
 import Header from "@/components/Header"
 import { useMeta } from "@/components/Meta"
-import { NUMBERS, PENDING, SNAPSHOT, TRACES, type BoardRow, type PendingBenchmark } from "@/data/benchmark"
+import { NUMBERS, OSB, SNAPSHOT, TRACES, type BoardRow } from "@/data/benchmark"
 import { GITHUB, docs } from "@/data/links"
 import boardTbsSvg from "@/data/benchmark/board-tbs.svg?raw"
 import domainsSvg from "@/data/benchmark/domains.svg?raw"
@@ -19,6 +19,7 @@ import rasterSvg from "@/data/benchmark/raster.svg?raw"
 import bifurcationSvg from "@/data/benchmark/bifurcation.svg?raw"
 import glyphResults from "@/data/benchmark/glyph-results.svg?raw"
 import glyphLoop from "@/data/benchmark/glyph-loop.svg?raw"
+import glyphBench from "@/data/benchmark/glyph-interface.svg?raw"
 import glyphAgent from "@/data/benchmark/glyph-agent.svg?raw"
 import glyphDelegation from "@/data/benchmark/glyph-delegation.svg?raw"
 import glyphAvailability from "@/data/benchmark/glyph-availability.svg?raw"
@@ -40,10 +41,26 @@ function Section({ id, glyph, children }: { id: string; glyph: string; children:
   )
 }
 
-function Figure({ n, svg, narrow, children }: { n: number; svg: string; narrow?: boolean; children: React.ReactNode }) {
+function Figure({
+  n,
+  svg,
+  plate,
+  narrow,
+  children,
+}: {
+  n: number
+  svg?: string
+  plate?: React.ReactNode
+  narrow?: boolean
+  children: React.ReactNode
+}) {
   return (
     <figure className="reveal">
-      <div data-slot="plate" data-narrow={narrow ? "" : undefined} dangerouslySetInnerHTML={{ __html: svg }} />
+      {svg ? (
+        <div data-slot="plate" data-narrow={narrow ? "" : undefined} dangerouslySetInnerHTML={{ __html: svg }} />
+      ) : (
+        <div data-slot="plate">{plate}</div>
+      )}
       <figcaption>
         <span data-slot="fl">Figure {n}.</span>
         {children}
@@ -52,62 +69,56 @@ function Figure({ n, svg, narrow, children }: { n: number; svg: string; narrow?:
   )
 }
 
-/* Figure 8: one card per benchmark, an empty frame until its rows arrive.
-   Class names are the post's, so its figure rules apply unchanged. */
-function Pending({ bench }: { bench: PendingBenchmark }) {
-  const rows: BoardRow[] = [...bench.rows].sort((a, b) => b.value - a.value)
-  const n = Math.max(rows.length, 3)
-  const W = 190
-  const x0 = 0
-  const x1 = W - 34
-  const rowh = 32
-  const top = 2
-  const H = top + n * rowh + 16
-  const X = (v: number) => x0 + ((x1 - x0) * v) / bench.max
+/* Figure 8: OpenScience Bench, drawn in the post's board style (its classes
+   and colours come from benchmark-figures.css). */
+function OsbBoard() {
+  const rows: BoardRow[] = [...OSB.rows].sort((a, b) => b.value - a.value)
+  const x0 = 184.8
+  const x1 = 610
+  const max = 60
+  const top = 48
+  const step = 24
+  const H = top + rows.length * step + 16
+  const X = (v: number) => x0 + ((x1 - x0) * v) / max
   return (
-    <div className="pending reveal">
-      <h5>{bench.title}</h5>
-      <div className="m">{bench.metric}</div>
-      <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${bench.title} results`}>
-        {[0, 0.5, 1].map((t) => (
-          <g key={t}>
-            <line x1={X(t * bench.max)} x2={X(t * bench.max)} y1={top} y2={top + n * rowh} />
-            <text x={X(t * bench.max)} y={H - 3} textAnchor="middle">
-              {Math.round(t * bench.max)}
+    <svg className="chart board" viewBox={`0 0 650 ${H}`} role="img" aria-label="OpenScience Bench results">
+      <text className="ttl" x="0" y="13">
+        OpenScience Bench
+      </text>
+      <text className="sub" x="0" y="29">
+        end-to-end scientific research, pass@3 for every entry
+      </text>
+      {[0, 20, 40, 60].map((t) => (
+        <g key={t}>
+          <line className="gl" x1={X(t)} x2={X(t)} y1={top - 10} y2={top + rows.length * step - 8} />
+          <text className="tk" x={X(t)} y={H - 3} textAnchor="middle">
+            {t}
+          </text>
+        </g>
+      ))}
+      {rows.map((row, i) => {
+        const y = top + i * step
+        const mine = row.harness === "os"
+        return (
+          <g key={row.name}>
+            <text className={mine ? "rl ours" : "rl"} x={x0 - 10} y={y + 6.5} textAnchor="end">
+              {row.name} <tspan className="md">· {row.model}</tspan>
+            </text>
+            <rect
+              className={`bar h-${row.harness}`}
+              x={x0}
+              y={y - 4}
+              width={X(row.value) - x0}
+              height={13}
+              style={{ ["--i" as string]: i }}
+            />
+            <text className={`val h-${row.harness}`} x={X(row.value) + 6} y={y + 6.5}>
+              {row.value}
             </text>
           </g>
-        ))}
-        {rows.length === 0 ? (
-          <text className="soon" x={(x0 + x1) / 2} y={top + (n * rowh) / 2 + 4} textAnchor="middle">
-            Results forthcoming
-          </text>
-        ) : (
-          rows.map((row, i) => {
-            const y = top + i * rowh
-            return (
-              <g key={`${row.name}-${row.model}`}>
-                <text className="rl" x={x0} y={y + 9}>
-                  {row.name}
-                  {row.model ? ` · ${row.model}` : ""}
-                </text>
-                <rect
-                  className={`bar h-${row.harness}`}
-                  x={x0}
-                  y={y + 14}
-                  width={Math.max(0, X(row.value) - x0)}
-                  height={11}
-                  style={{ ["--i" as string]: i }}
-                />
-                <text className={`val h-${row.harness}`} x={X(row.value) + 4} y={y + 23}>
-                  {row.value}
-                </text>
-              </g>
-            )
-          })
-        )}
-      </svg>
-      <p className="d">{bench.about}</p>
-    </div>
+        )
+      })}
+    </svg>
   )
 }
 
@@ -290,6 +301,20 @@ export default function Benchmark() {
                   </>
                 }
               />
+              <Stat
+                value={String(OSB.rows[0].value)}
+                unit="%"
+                bars={[
+                  { harness: "os", width: OSB.rows[0].value },
+                  { harness: "cc", width: OSB.rows[1].value },
+                ]}
+                name="OpenScience Bench"
+                compare={
+                  <>
+                    +{OSB.margin} over <span data-harness="cc">{OSB.other_short}</span> {OSB.rows[1].value}
+                  </>
+                }
+              />
             </div>
           </section>
 
@@ -368,21 +393,21 @@ export default function Benchmark() {
               OpenScience's score on each of the {N.bio_n} BiomniBench-DA tasks.
             </Figure>
 
-            <h3>OpenScience Bench, ResearchClawBench and BixBench 3</h3>
+            <Section id="openscience-bench" glyph={glyphBench}>
+              OpenScience Bench
+            </Section>
             <p>
-              We run these three through their native runners. Results and traces will be added here as they come in.
+              The public benchmarks each test part of the work. OpenScience Bench, our internal benchmark, measures
+              end-to-end scientific research, and every entry is scored pass@3. OpenScience with GPT-6 Astra scores{" "}
+              {OSB.rows[0].value}%, ahead of Claude Science with Fable 5.1 ({OSB.rows[1].value}%), K-Dense (BYOK) with
+              GPT-6 Astra ({OSB.rows[2].value}%) and Codex with GPT-6 Astra ({OSB.rows[3].value}%); Grok Build with Grok
+              4.7 scores {OSB.rows[4].value}%. Three of those entries run the same model, so their gap is the harness:{" "}
+              {(OSB.rows[0].value - OSB.rows[2].value).toFixed(1)} points over K-Dense and{" "}
+              {(OSB.rows[0].value - OSB.rows[3].value).toFixed(1)} over Codex.
             </p>
-            <figure>
-              <div className="pending-grid">
-                {PENDING.map((bench) => (
-                  <Pending key={bench.id} bench={bench} />
-                ))}
-              </div>
-              <figcaption>
-                <span data-slot="fl">Figure 8.</span>
-                Results on OpenScience Bench, ResearchClawBench and BixBench 3, each in its native metric.
-              </figcaption>
-            </figure>
+            <Figure n={8} plate={<OsbBoard />}>
+              OpenScience Bench, pass@3 for every entry. The model each harness ran is after the dot.
+            </Figure>
 
             <Section id="loop" glyph={glyphLoop}>
               How OpenScience works

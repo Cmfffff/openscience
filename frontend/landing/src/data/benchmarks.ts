@@ -3,7 +3,7 @@
    Every number here comes from `src/data/benchmark.ts`, the snapshot of the
    launch post's data, so the front page and /benchmark cannot disagree. */
 
-import { NUMBERS } from "./benchmark"
+import { NUMBERS, OSB } from "./benchmark"
 
 export type Benchmark = {
   id: string
@@ -13,9 +13,9 @@ export type Benchmark = {
   unit: "%" | ""
   /** The margin over the strongest other entry, and who that is. */
   lead: string
-  /** The benchmark's own page. */
+  /** The benchmark's own page; our internal benchmark links to its section. */
   href: string
-  chart: "domains" | "ranked" | "distribution"
+  chart: "domains" | "ranked" | "distribution" | "openscience-bench"
 }
 
 export const BENCHMARKS: readonly Benchmark[] = [
@@ -45,5 +45,14 @@ export const BENCHMARKS: readonly Benchmark[] = [
     lead: `+${NUMBERS.bio_margin} over ${NUMBERS.bio_other_short}`,
     href: "https://github.com/omicverse/BiomniBench-AI4S",
     chart: "distribution",
+  },
+  {
+    id: "openscience-bench",
+    name: "OpenScience Bench (pass@3)",
+    score: OSB.rows[0].value,
+    unit: "%",
+    lead: `+${OSB.margin} over ${OSB.other_short}`,
+    href: "/benchmark#openscience-bench",
+    chart: "openscience-bench",
   },
 ]
