@@ -997,18 +997,20 @@ pre {
     &[data-component] {
       display: grid;
     }
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 56px 64px;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 40px 32px;
 
-    @media (max-width: 40rem) {
+    @media (max-width: 60rem) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    @media (max-width: 30rem) {
       grid-template-columns: 1fr;
-      gap: 40px;
     }
 
     [data-component="benchmark"] {
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 12px;
       width: 100%;
       min-width: 0;
 
@@ -1017,6 +1019,7 @@ pre {
         display: block;
         svg {
           width: 100%;
+          max-width: 280px;
           height: auto;
           display: block;
           font-family: var(--font-serif);
@@ -1025,10 +1028,11 @@ pre {
       /* One line of text that wraps like prose, number and name together. */
       > span {
         display: block;
+        font-size: 14px;
         line-height: 150%;
 
         > * + * {
-          margin-left: 10px;
+          margin-left: 8px;
         }
         color: var(--color-text-weak);
 
