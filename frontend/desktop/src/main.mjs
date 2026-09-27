@@ -1,6 +1,6 @@
 import { randomBytes } from "node:crypto"
 import { execFile, spawn } from "node:child_process"
-import { appendFileSync, existsSync, mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs"
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { readFile, rename, rm, writeFile } from "node:fs/promises"
 import { createServer } from "node:http"
 import path from "node:path"
@@ -26,7 +26,7 @@ import { seedArchive } from "./update-download.mjs"
 import { disposeRuntime } from "./runtime-disposal.mjs"
 import { healthyRuntime, pinnedVersion } from "./service-health.mjs"
 import { servicePort } from "./service-port.mjs"
-import { logsDirectory } from "./log-path.mjs"
+import { logsDirectory, rotateLogs } from "./log-path.mjs"
 import { readAppearance, resolveAppearance, saveAppearance, splashQuery, sweepAppearance } from "./appearance.mjs"
 
 const execute = promisify(execFile)
@@ -412,15 +412,9 @@ async function start() {
   const output = path.join(logs, "openscience-sidecar.log")
   mkdirSync(workspace, { recursive: true })
   mkdirSync(logs, { recursive: true })
-  // Keep the previous run's output: a failed start is otherwise wiped by the
-  // very relaunch made to investigate it.
-  if (existsSync(output)) {
-    try {
-      renameSync(output, path.join(logs, "openscience-sidecar.prev.log"))
-    } catch {
-      /* rotation is best effort; a fresh log still starts below */
-    }
-  }
+  // Keep earlier runs' output: a failed start is otherwise wiped by the very
+  // relaunch made to investigate it.
+  rotateLogs(output)
   writeFileSync(output, "", { mode: 0o600 })
   state.address = `http://127.0.0.1:${selected}`
   state.serviceExecutable = path.resolve(executable)

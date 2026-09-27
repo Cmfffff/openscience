@@ -957,6 +957,7 @@ export namespace OpenScience {
         log.warn("workspace credential sync failed", {
           status: seen.status,
           error: error instanceof Error ? error.name : typeof error,
+          code: (error as { code?: unknown } | undefined)?.code,
           message: error instanceof Error ? error.message : String(error),
           expires_at: WorkspaceCredentials.expiresAt(),
         })
@@ -1756,10 +1757,14 @@ export namespace OpenScience {
 
   function refreshBalance(session: FundingSnapshot, context: string) {
     const revision = balanceRevision
+    const started = Date.now()
     const request = (async () => {
       try {
         const response = await fundedAtlasFetch(session, `${apiBase()}/api/cli/balance`, {}, BALANCE_FETCH_TIMEOUT_MS)
-        if (!response.ok) return null
+        if (!response.ok) {
+          log.warn("balance check failed", { status: response.status, elapsed_ms: Date.now() - started })
+          return null
+        }
         const body = (await response.json()) as Record<string, unknown>
         const value =
           typeof body.effective_balance_usd === "number"
@@ -1775,8 +1780,15 @@ export namespace OpenScience {
           return cachedBalance?.context === context ? cachedBalance.value : null
         }
         if (value !== null) cachedBalance = { context, value, at: Date.now() }
+        else log.warn("balance check failed", { error: "the response named no balance", fields: Object.keys(body) })
         return value
-      } catch {
+      } catch (error) {
+        log.warn("balance check failed", {
+          error: error instanceof Error ? error.name : typeof error,
+          code: (error as { code?: unknown } | undefined)?.code,
+          message: error instanceof Error ? error.message : String(error),
+          elapsed_ms: Date.now() - started,
+        })
         return null
       }
     })()
