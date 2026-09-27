@@ -213,26 +213,12 @@
     }
   }
 
-  [data-slot="hero-figure"] {
-    margin: 2.6rem 0 0;
-    svg {
-      width: 100%;
-      height: auto;
-      display: block;
-      overflow: visible;
-    }
-    figcaption {
-      max-width: var(--col);
-      text-align: center;
-      margin: 0.7rem auto 0;
-    }
-  }
-
   /* Stats strip -------------------------------------------------------- */
   [data-slot="stats"] {
     display: grid;
-    grid-template-columns: 1fr 1fr 1.12fr 0.88fr;
-    margin: 2.2rem 0 0;
+    grid-template-columns: repeat(3, 1fr);
+    max-width: var(--col);
+    margin: 2.4rem auto 0;
     background: var(--plate);
     border: 1px solid var(--rule);
     border-radius: 3px;
@@ -254,9 +240,6 @@
         color: var(--muted);
         margin-left: 0.1em;
       }
-    }
-    [data-kind="universities"] [data-slot="value"] {
-      color: var(--ink);
     }
     [data-slot="bars"] {
       height: 11px;
@@ -285,21 +268,6 @@
         background: var(--graphite);
       }
     }
-    [data-slot="dots"] {
-      display: grid;
-      grid-template-columns: repeat(15, 4px);
-      gap: 3px;
-      height: 11px;
-      margin: 0.8rem 0 0.75rem;
-      i {
-        display: block;
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: var(--ink-2);
-        opacity: 0.55;
-      }
-    }
     [data-slot="bench"] {
       font-size: 0.72rem;
       color: var(--ink);
@@ -323,16 +291,14 @@
       }
     }
     @media (max-width: 600px) {
-      grid-template-columns: repeat(2, 1fr);
+      grid-template-columns: 1fr;
       [data-slot="bench"],
       [data-slot="compare"] {
         white-space: normal;
       }
-      [data-slot="stat"]:nth-child(3) {
+      [data-slot="stat"] + [data-slot="stat"] {
         border-left: 0;
-      }
-      [data-slot="stat"]:nth-child(-n + 2) {
-        border-bottom: 1px solid var(--rule);
+        border-top: 1px solid var(--rule);
       }
     }
   }

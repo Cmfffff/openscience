@@ -5,7 +5,6 @@ import Header from "@/components/Header"
 import { useMeta } from "@/components/Meta"
 import { NUMBERS, PENDING, SNAPSHOT, TRACES, type BoardRow, type PendingBenchmark } from "@/data/benchmark"
 import { GITHUB, docs } from "@/data/links"
-import heroSvg from "@/data/benchmark/hero.svg?raw"
 import boardTbsSvg from "@/data/benchmark/board-tbs.svg?raw"
 import domainsSvg from "@/data/benchmark/domains.svg?raw"
 import matrixSvg from "@/data/benchmark/matrix.svg?raw"
@@ -249,10 +248,6 @@ export default function Benchmark() {
               </div>
             </header>
 
-            <figure data-slot="hero-figure">
-              <div aria-hidden dangerouslySetInnerHTML={{ __html: heroSvg }} />
-            </figure>
-
             <div data-slot="stats">
               <Stat
                 value={String(N.tbs_pct)}
@@ -295,18 +290,6 @@ export default function Benchmark() {
                   </>
                 }
               />
-              <div data-slot="stat" data-kind="universities">
-                <div data-slot="value">
-                  30<small>+</small>
-                </div>
-                <div data-slot="dots" aria-hidden>
-                  {Array.from({ length: 30 }, (_, i) => (
-                    <i key={i} />
-                  ))}
-                </div>
-                <div data-slot="bench">Universities</div>
-                <div data-slot="compare">using OpenScience</div>
-              </div>
             </div>
           </section>
 
