@@ -229,6 +229,20 @@ export default function Landing() {
             <div data-slot="installation">
               <InstallTabs />
             </div>
+
+            <a
+              data-slot="product-hunt"
+              href="https://www.producthunt.com/products/openscience?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-openscience"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <img
+                alt="OpenScience - The open-source AI workbench for scientific research | Product Hunt"
+                width="250"
+                height="54"
+                src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1261821&theme=dark&t=1790483021568"
+              />
+            </a>
           </section>
 
           <Workspace />

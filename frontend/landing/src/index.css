@@ -848,6 +848,18 @@ pre {
     max-width: 100%;
     overflow: hidden;
   }
+  /* Product Hunt's featured badge, under the install command. */
+  [data-slot="product-hunt"] {
+    align-self: flex-start;
+    margin-top: 28px;
+    line-height: 0;
+    text-decoration: none;
+    img {
+      display: block;
+      width: 250px;
+      height: 54px;
+    }
+  }
   [data-component="tabs"] {
     [data-slot="tablist"] {
       display: flex;
