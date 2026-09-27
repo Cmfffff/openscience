@@ -295,12 +295,12 @@ export default function Benchmark() {
 
           <article data-slot="paper">
             <Section id="results" glyph={glyphResults}>
-              Results
+              Benchmarks for agentic scientific research
             </Section>
             <p>
-              OpenScience leads every public benchmark for scientific agents that we have run. Each benchmark runs in
-              its native environment, with its own verifiers or judge, through Harbor on Modal, and we report each in
-              its own metric. Every other entry shown is from the benchmark's public leaderboard or a published
+              OpenScience leads every public benchmark for agentic scientific research that we have run. Each benchmark
+              runs in its native environment, with its own verifiers or judge, through Harbor on Modal, and we report
+              each in its own metric. Every other entry shown is from the benchmark's public leaderboard or a published
               comparison on the same tasks and grader.
               <sup data-slot="fn">
                 <a href="#n2">2</a>
@@ -385,22 +385,22 @@ export default function Benchmark() {
             </figure>
 
             <Section id="loop" glyph={glyphLoop}>
-              A loop with no science in it
+              How OpenScience works
             </Section>
             <p>
-              The results come from a small agent loop that contains no scientific logic. Domain knowledge lives around
-              it: in skills, in agent definitions, and in a prompt header for each model family. A few optional harness
-              units add checks at the end of a turn. One re-reads a written report against the original request in a
-              fresh context; another enforces the budget. We keep a unit only if it improves measured outcomes.
+              At the centre is a small, general agent loop. The science lives around it: in skills, in the agent
+              definitions, and in a prompt header for each model family. A few optional harness units add checks at the
+              end of a turn: one re-reads a written report against the original request in a fresh context, another
+              enforces the budget. A unit stays only if it improves measured outcomes.
             </p>
             <p>
               Because the loop is model-agnostic, the product is too. The science instructions are identical across
               model families, no built-in agent is tied to a model, and each lab can run the model it trusts.
             </p>
             <Figure n={9} svg={archSvg}>
-              How a request moves through OpenScience. The lead agent loads skills as needed (one dot per skill), sends
-              briefs to workers and gets back reports with a verification, calls tools and compute, and returns Results
-              with their provenance.
+              How a request moves through OpenScience. The lead agent loads skills as a task needs them, sends briefs to
+              workers and gets back reports with a verification, calls tools and compute, and returns Results with their
+              provenance.
             </Figure>
 
             <Section id="agent" glyph={glyphAgent}>

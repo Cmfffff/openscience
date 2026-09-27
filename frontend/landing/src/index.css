@@ -822,24 +822,59 @@ pre {
   }
 
   /* Install tabs -------------------------------------------------------- */
+  /* The hero's two badges, one height: YC drawn to match Product Hunt's
+     featured badge (250 x 54, dark). */
+  [data-slot="badges"] {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
   [data-slot="backed"] {
-    margin-bottom: 28px;
-    align-self: flex-start;
+    height: 54px;
     display: inline-flex;
     align-items: center;
-    gap: 10px;
-    font-size: var(--text-small);
-    color: var(--color-text-weak);
+    gap: 12px;
+    padding: 0 20px 0 12px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: hsl(0, 0%, 11%);
+    color: var(--color-text-strong);
     text-decoration: none;
+    font-family:
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Helvetica,
+      Arial,
+      sans-serif;
+    -webkit-text-stroke: 0;
     line-height: 1;
+    transition: border-color 120ms ease;
     &:hover {
+      border-color: var(--color-text-weak);
       color: var(--color-text-strong);
     }
     [data-slot="yc"] {
-      width: 18px;
-      height: 18px;
+      width: 30px;
+      height: 30px;
       display: block;
-      border-radius: 2px;
+      border-radius: 5px;
+    }
+    > span {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+    small {
+      font-size: 9px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
     }
   }
 
@@ -848,10 +883,7 @@ pre {
     max-width: 100%;
     overflow: hidden;
   }
-  /* Product Hunt's featured badge, under the install command. */
   [data-slot="product-hunt"] {
-    align-self: flex-start;
-    margin-top: 28px;
     line-height: 0;
     text-decoration: none;
     img {
