@@ -12,6 +12,15 @@ import { SessionPrompt } from "@/session/prompt"
 export namespace SessionWake {
   const log = Log.create({ service: "session.wake" })
 
+  export type Source = "compute" | "worker" | "study"
+
+  /** Part metadata that tells a client the message is the runtime reporting
+   * back, not a request: it folds into the turn it continues as one line
+   * reading `label`, instead of opening a turn of its own. */
+  export function marker(source: Source, label: string) {
+    return { "openscience.wake": { source, label } }
+  }
+
   /** The settings of the turn a wake continues. A report is not a new request,
    * so it carries the newest user message's effort, delegation settings
    * (autonomy, worker model), tools and system context. Left off, the loop
@@ -48,6 +57,8 @@ export namespace SessionWake {
     variant?: string
     text: string
     describe: string
+    source?: Source
+    label?: string
   }) {
     const settings = await inherited(input.sessionID)
     const message = await SessionPrompt.prompt({
@@ -57,7 +68,14 @@ export namespace SessionWake {
       ...settings,
       variant: input.variant ?? settings.variant,
       noReply: true,
-      parts: [{ type: "text", synthetic: true, text: input.text }],
+      parts: [
+        {
+          type: "text",
+          synthetic: true,
+          text: input.text,
+          ...(input.source ? { metadata: marker(input.source, input.label ?? input.describe) } : {}),
+        },
+      ],
     })
     for (let attempt = 0; attempt < 3; attempt++) {
       await SessionPrompt.loop(input.sessionID).catch(() => undefined)

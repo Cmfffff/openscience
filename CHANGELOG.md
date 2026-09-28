@@ -17,6 +17,13 @@ tagged release also ships native binaries for Linux, macOS, and Windows.
   and a de-emphasised "Don't show again" beside the primary action; each line
   drops the trailing author/bot attribution and pull-request number, so a
   dependency bump reads "Bump X from a to b" rather than the raw git-log tail.
+- **Autoresearch stays in one trace.** Study updates and compute jobs finishing
+  used to arrive as new user messages: each opened a turn of its own, study
+  updates read as if you had typed them, and a job's report showed as an empty
+  bubble with only Undo and Fork. They now fold into the turn you started as one
+  grey line ("Compute job topo_classic succeeded", "Study update: …"). A study
+  update whose turn you stop or interrupt is no longer sent again, and stopping
+  it no longer pauses the study.
 - **The activity trace opens and closes smoothly.** A "Thought", "Searched" or
   "Edited" group in a turn's trace used to snap open and shut; its body now
   eases its height and fades over ~240 ms, honouring `prefers-reduced-motion`.

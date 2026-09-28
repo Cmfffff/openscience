@@ -407,7 +407,7 @@ describe("study driver", () => {
           now: () => h.clock.now,
           idle: () => true,
           prompt: async ({ text }) => {
-            if (failing.on) throw new Error("session busy elsewhere")
+            if (failing.on) throw new Session.BusyError("ses_retry")
             prompts.push(text)
           },
           job: async (jobID) =>
@@ -436,6 +436,63 @@ describe("study driver", () => {
         expect(prompts).toHaveLength(1)
         expect(prompts[0]).toContain('Run "one"')
         expect((await Experiments.getStudy(study.id))?.turns).toBe(1)
+      },
+    })
+  })
+
+  test("a wake whose turn the user interrupted is not sent again and does not pause the study", async () => {
+    await using tmp = await tmpdir()
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const session = await Session.create({})
+        const h = harness(tmp.path)
+        const prompts: string[] = []
+        StudyDriver.configure({
+          now: () => h.clock.now,
+          idle: () => true,
+          prompt: async ({ text }) => {
+            prompts.push(text)
+            await Session.updateMessage({
+              id: `msg_stopped_${prompts.length}`,
+              sessionID: session.id,
+              role: "assistant",
+              parentID: "msg_user",
+              mode: "research",
+              agent: "research",
+              path: { cwd: tmp.path, root: tmp.path },
+              cost: 0,
+              tokens: { input: 0, output: 0, reasoning: 0, cache: { read: 0, write: 0 } },
+              modelID: "m",
+              providerID: "p",
+              time: { created: h.clock.now, completed: h.clock.now },
+              error: new MessageV2.AbortedError({ message: "The operation was aborted." }).toObject(),
+            })
+            throw new Error("The operation was aborted.")
+          },
+          job: async (jobID) =>
+            h.jobs.has(jobID) ? ({ id: jobID, ...h.jobs.get(jobID)! } as JobBroker.Job) : undefined,
+          cancel: async () => undefined,
+          logPath: async (jobID) => path.join(tmp.path, `${jobID}.log`),
+        })
+        const study = await Experiments.createStudy({
+          sessionID: session.id,
+          name: "stopped",
+          purpose: "test",
+          metric: "val_loss",
+          direction: "minimize",
+          root: path.join(tmp.path, "study"),
+          budget: { maxRuns: 5 },
+        })
+        const [idea] = await Experiments.proposeIdeas(study.id, [{ title: "one", description: "d", why: "w", ev: 0.1 }])
+        await Experiments.createRun({ name: "one", source: "job", studyID: study.id, ideaID: idea!.id, jobID: "job_s" })
+        h.jobs.set("job_s", { status: "succeeded" })
+        await StudyDriver.tick(study.id)
+        expect(prompts).toHaveLength(1)
+        expect(prompts[0]).toContain('Run "one"')
+        await StudyDriver.tick(study.id)
+        expect(prompts).toHaveLength(1)
+        expect((await Experiments.getStudy(study.id))?.status).toBe("running")
       },
     })
   })

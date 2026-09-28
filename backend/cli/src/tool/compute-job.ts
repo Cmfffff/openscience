@@ -817,6 +817,8 @@ async function armWake(
         ...origin,
         text: `Compute job ${job.id} (${job.name}) ended with status ${job.status}. Read its logs with compute_job logs and its outputs with compute_job artifacts before continuing.`,
         describe: `compute job ${jobID}`,
+        source: "compute",
+        label: `Compute job ${job.name} ${job.status}`,
       })
     } catch (error) {
       // The wake is what a caller waits on, so a watcher that cannot report
@@ -827,6 +829,8 @@ async function armWake(
         ...origin,
         text: `Compute job ${jobID} could not be watched to completion (${error instanceof Error ? error.message : String(error)}). Check it with compute_job status.`,
         describe: `compute job ${jobID}`,
+        source: "compute",
+        label: `Compute job ${jobID} could not be watched`,
       }).catch(() => undefined)
     } finally {
       watched.delete(jobID)

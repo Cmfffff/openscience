@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import type { Message, Part, UserMessage } from "@synsci/sdk/v2"
 import { noteLabel } from "./trace-rows"
-import { isContinuationCarrier, turnOpener } from "./session-turn-carrier"
+import { isContinuationCarrier, turnOpener, wakeLabel } from "./session-turn-carrier"
 
 const user = (id: string, internal?: UserMessage["internal"]): UserMessage => ({
   id,
@@ -54,6 +54,48 @@ describe("continuation carriers", () => {
     expect(isContinuationCarrier(manual, [{ ...marker, id: "prt_m", messageID: "msg_m", auto: false }])).toBe(false)
     expect(isContinuationCarrier(wake, [])).toBe(false)
     expect(isContinuationCarrier(wake, undefined)).toBe(false)
+  })
+
+  test("a compute job ending and a study update fold into the running turn and read as one line", () => {
+    const opener = user("msg_1", { type: "prompt", epoch: "msg_1" })
+    const job = user("msg_2", { type: "prompt", epoch: "msg_2" })
+    const study = user("msg_3", { type: "prompt", epoch: "msg_3" })
+    const legacy = user("msg_4", { type: "prompt", epoch: "msg_4" })
+    const marked = (id: string, value: string, label: string): Part => ({
+      id: `prt_${id}`,
+      sessionID: "ses_c",
+      messageID: id,
+      type: "text",
+      text: value,
+      synthetic: true,
+      metadata: { "openscience.wake": { source: "compute", label } },
+    })
+    const parts = (id: string): Part[] => {
+      if (id === job.id)
+        return [
+          marked(id, "Compute job j1 (topo) ended with status succeeded. Read its logs.", "Compute job topo succeeded"),
+        ]
+      if (id === study.id)
+        return [marked(id, 'Study update for "s":\n- 3 of 3 slots free.', "Study update: 3 of 3 slots free")]
+      if (id === legacy.id)
+        return [
+          text(
+            id,
+            "Compute job 5c4a54d9-311 (cma_staged2) ended with status succeeded. Read its logs with compute_job logs.",
+            true,
+          ),
+        ]
+      return [text(id, "Optimise the valve.")]
+    }
+    const messages: Message[] = [opener, job, study, legacy]
+    for (const index of [1, 2, 3]) expect(turnOpener(messages, index, parts)?.id).toBe("msg_1")
+    expect(wakeLabel(parts(job.id)[0] as Extract<Part, { type: "text" }>)).toBe("Compute job topo succeeded")
+    expect(wakeLabel(parts(legacy.id)[0] as Extract<Part, { type: "text" }>)).toBe("Compute job cma_staged2 succeeded")
+    // The same words typed by a person are a request, not a report.
+    const typed = user("msg_5", { type: "prompt", epoch: "msg_5" })
+    expect(isContinuationCarrier(typed, [text("msg_5", "Compute job x (y) ended with status failed. Why?")])).toBe(
+      false,
+    )
   })
 
   test("a compaction carrier folds into the turn it interrupted, so the work after it is not orphaned", () => {

@@ -5,6 +5,7 @@ import { Instance } from "@/project/instance"
 import { Session } from "@/session"
 import { SessionPrompt } from "@/session/prompt"
 import { SessionStatus } from "@/session/status"
+import { SessionWake } from "@/session/wake"
 import type { MessageV2 } from "@/session/message-v2"
 import { Log } from "@/util/log"
 import { KillCriteria } from "./kill"
@@ -170,7 +171,7 @@ export namespace StudyDriver {
     return SessionStatus.get(sessionID).type === "idle"
   }
 
-  async function prompt(sessionID: string, text: string) {
+  async function prompt(sessionID: string, text: string, label: string) {
     const custom = deps().prompt
     if (custom) return custom({ sessionID, text })
     // The study keeps the model, effort and delegation the user chose when
@@ -184,7 +185,9 @@ export namespace StudyDriver {
       effort: last?.effort,
       delegation: last?.delegation,
       delegationSettings: last?.delegationSettings,
-      parts: [{ type: "text", text }],
+      // Nobody typed this: synthetic, so it is not read as the user's request,
+      // and marked, so the client keeps it inside the turn it continues.
+      parts: [{ type: "text", synthetic: true, text, metadata: SessionWake.marker("study", label) }],
     })
   }
 
@@ -459,10 +462,15 @@ export namespace StudyDriver {
     if (!urgent && current.turnsAt.length >= MAX_TURNS_PER_HOUR) return
     const lines = current.pending.splice(0)
     const text = [`Study update for "${study.name}":`, ...lines.map((line) => `- ${line}`)].join("\n")
-    const sent = await prompt(study.sessionID, text)
+    const label = `Study update: ${lines.map((line) => line.split(/(?<=\.)\s/)[0]!.replace(/\.$/, "")).join(" · ")}`
+    const sent = await prompt(study.sessionID, text, label)
       .then(() => true)
       .catch((error) => {
         log.warn("study wake failed", { study: study.id, error })
+        // Only a busy session refuses the message before writing it. Any later
+        // failure (the user stopping or interrupting the turn) comes after the
+        // update is in the transcript; sending it again repeats the same news.
+        if (!(error instanceof Session.BusyError)) return true
         current.pending.unshift(...lines)
         return false
       })
@@ -493,6 +501,8 @@ export namespace StudyDriver {
     const messages = await Session.messages({ sessionID, limit: 6 }).catch(() => [])
     const last = messages.findLast((message) => message.info.role === "assistant")
     if (!last || last.info.role !== "assistant" || !last.info.error) return
+    // A stopped turn is the user's choice, not the provider refusing.
+    if (last.info.error.name === "MessageAbortedError") return
     const data = (last.info.error as { data?: { message?: unknown } }).data
     const message = typeof data?.message === "string" ? data.message : last.info.error.name
     return message.replace(/\s+/g, " ").slice(0, 200)

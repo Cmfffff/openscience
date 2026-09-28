@@ -2,6 +2,7 @@ import type { Part, ToolPart } from "@synsci/sdk/v2/client"
 import type { ResearchTraceEntry } from "./research-trace"
 import { collapsibleTracePart, settledCollapsible, traceFamily } from "./research-trace"
 import { toolChanges, writtenFiles, reasoningDisplayText } from "./tool-display"
+import { wakeLabel } from "./session-turn-carrier"
 
 /**
  * The activity trace as a list of rows, the way Cursor presents work: one
@@ -107,7 +108,7 @@ export function buildTraceRows(entries: ResearchTraceEntry[]): TraceRow[] {
   entries.forEach((entry, index) => {
     const part = entry.part
     if (part.type === "text" && part.synthetic) {
-      const text = part.text.replace(/<\/?system-reminder[^>]*>/g, "").trim()
+      const text = wakeLabel(part) ?? part.text.replace(/<\/?system-reminder[^>]*>/g, "").trim()
       if (text && !COMPACTION_CONTINUATION.test(text))
         rows.push({ kind: "note", entry, text, details: /^Tools (?:added|removed):/.test(text) })
       return

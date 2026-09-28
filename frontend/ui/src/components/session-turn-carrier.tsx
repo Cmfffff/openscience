@@ -19,8 +19,23 @@ export function isContinuationCarrier(message: Message, parts: readonly Part[] |
   return (
     texts.length === parts.length &&
     texts.every((part) => part.synthetic) &&
-    texts.some((part) => /^\s*<task\b/.test(part.text))
+    texts.some((part) => /^\s*<task\b/.test(part.text) || wakeLabel(part) !== undefined)
   )
+}
+
+/** Sessions written before wakes carried a marker still hold compute-job
+ * reports in this exact wording. */
+const LEGACY_COMPUTE_WAKE = /^Compute job \S+ (\((.*)\) ended with status (\w+)\.|could not be watched)/
+
+/** The one line a runtime report (a compute job ending, a study update) shows
+ * in the trace, or undefined for text that is not such a report. */
+export function wakeLabel(part: Extract<Part, { type: "text" }>): string | undefined {
+  if (!part.synthetic) return
+  const marker = part.metadata?.["openscience.wake"] as { label?: unknown } | undefined
+  if (typeof marker?.label === "string") return marker.label
+  const legacy = LEGACY_COMPUTE_WAKE.exec(part.text)
+  if (!legacy) return
+  return legacy[2] ? `Compute job ${legacy[2]} ${legacy[3]}` : part.text.split(/(?<=\.)\s/)[0]
 }
 
 /** The user message that opened the turn a message belongs to: itself for a
