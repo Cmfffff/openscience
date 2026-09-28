@@ -652,3 +652,47 @@ describe("study driver", () => {
     })
   })
 })
+
+test("launches that never became jobs are not counted as runs without progress", async () => {
+  await using tmp = await tmpdir()
+  await Instance.provide({
+    directory: tmp.path,
+    fn: async () => {
+      const h = harness(tmp.path)
+      const study = await Experiments.createStudy({
+        sessionID: "ses_launch",
+        name: "launch",
+        purpose: "test",
+        metric: "val_loss",
+        direction: "minimize",
+        root: path.join(tmp.path, "study"),
+        budget: { maxRuns: 20 },
+      })
+      const ideas = await Experiments.proposeIdeas(
+        study.id,
+        ["a", "b", "c", "d", "e"].map((title) => ({ title, description: "d", why: "w", ev: 0.1 })),
+      )
+      for (const idea of ideas.slice(0, 4)) {
+        const run = await Experiments.createRun({ name: idea.title, source: "job", studyID: study.id, ideaID: idea.id })
+        await Experiments.finishRun(run.id, "failed", { killReason: "dispatch failed: working directory unavailable" })
+      }
+      const real = ideas[4]!
+      await Experiments.createRun({
+        name: real.title,
+        source: "job",
+        studyID: study.id,
+        ideaID: real.id,
+        jobID: "job_e",
+      })
+      h.jobs.set("job_e", { status: "succeeded" })
+      await StudyDriver.tick(study.id)
+      expect(h.prompts).toHaveLength(1)
+      expect(h.prompts[0]).toContain('Run "e"')
+      expect(h.prompts[0]).not.toContain("No progress")
+      // Nor do they start the hour budget's clock.
+      expect(Experiments.clockStart(await Experiments.listRuns({ studyID: study.id }))).toBe(
+        (await Experiments.listRuns({ studyID: study.id })).find((run) => run.name === "e")?.startedAt ?? undefined,
+      )
+    },
+  })
+})

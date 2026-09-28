@@ -307,6 +307,15 @@ public 50 the old detector named an example's `samples.csv` and the input
 
 ### Fixed
 
+- **Autoresearch launches its own runs on this computer.** A study keeps its
+  code under Project files, but local compute only ran from Session scratch, so
+  every `study start` failed with "exists only in Project files" and the agent
+  fell back to plain compute jobs the Autoresearch pane never saw. A local run
+  now gets the same snapshot of the study folder a Modal run does, refreshed
+  from the project on every start. A launch that never became a job no longer
+  counts as a run, triggers a "no progress" nudge, or starts the hour budget,
+  and the pane's clock shows compute time instead of time since the study was
+  created.
 - **The agent can read a PDF you attach to a message.** An attached document
   existed only inside the message, and Ace models take no PDF input, so the
   agent was told to read "the file on disk" that did not exist and ended up

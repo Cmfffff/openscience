@@ -515,21 +515,18 @@ async function stageProjectDirectory(input: {
         "No compute job was dispatched.",
     )
   }
-  if (input.target.kind === "local") {
-    throw new Error(
-      `Local compute working directory "${input.cwd}" exists only in Project files. ` +
-        "Copy it into Session scratch before dispatch; automatic bounded snapshots are available for Modal and SSH only. " +
-        "No compute job was dispatched.",
-    )
-  }
-
   const parent = await Filesystem.canonical(path.dirname(current.target))
   if (!parent || !Filesystem.contains(workspace, parent)) {
     throw new Error(`Compute working directory escaped Session scratch while staging: ${input.cwd}`)
   }
 
-  const label = input.target.kind === "ssh" ? "SSH staging" : "Modal staging"
-  const manifest = await ModalPlan.stagingFiles(source.canonical, input.uploads ?? [], label, {
+  // Local jobs run only inside Session scratch, and a study in an isolated
+  // session keeps its code under Project files, so a local run gets the same
+  // bounded snapshot as a remote one: the whole folder unless uploads narrow it.
+  const label =
+    input.target.kind === "ssh" ? "SSH staging" : input.target.kind === "local" ? "Local staging" : "Modal staging"
+  const patterns = input.uploads ?? (input.target.kind === "local" ? ["**/*"] : [])
+  const manifest = await ModalPlan.stagingFiles(source.canonical, patterns, label, {
     prefix:
       input.target.kind === "ssh" && input.cwd !== "."
         ? input.cwd.replaceAll("\\", "/").replace(/^\.\//, "")

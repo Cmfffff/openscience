@@ -365,8 +365,10 @@ export namespace StudyDriver {
       // The loop is only as good as its backlog and its self-review. These
       // ride along with news that is already going out, never on their own.
       if (current.pending.length) {
+        // A launch that never became a job tried nothing, so it is neither
+        // progress nor a lack of it.
         const done = (await Experiments.listRuns({ studyID, limit: 2000 }))
-          .filter((run) => run.status !== "running")
+          .filter((run) => run.status !== "running" && !Experiments.dispatchFailed(run))
           .sort((a, b) => (a.endedAt ?? 0) - (b.endedAt ?? 0))
         if (queued.length < BACKLOG_MIN && done.length) {
           current.pending.push(

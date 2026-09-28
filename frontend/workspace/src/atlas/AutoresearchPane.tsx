@@ -22,6 +22,22 @@ function hours(from: number, to: number) {
   return value < 1 ? `${Math.max(1, Math.round(value * 60))} min` : `${value.toFixed(1)} h`
 }
 
+/** A launch that never became a job: it tried nothing, so it is not a run.
+ * The study's activity log still records it. */
+function launchFailed(run: ExperimentRun) {
+  return run.status === "failed" && (run.killReason?.startsWith("dispatch") ?? false)
+}
+
+/** Compute time, as the hour budget counts it: from the first run's start to
+ * now while runs are live, else to the last one's end. */
+function computeTime(runs: readonly ExperimentRun[], now: number) {
+  const starts = runs.flatMap((run) => (run.startedAt ? [run.startedAt] : []))
+  if (!starts.length) return
+  const live = runs.some((run) => run.status === "running")
+  const end = live ? now : Math.max(...runs.map((run) => run.endedAt ?? run.startedAt ?? 0))
+  return hours(Math.min(...starts), end)
+}
+
 function signed(value: number) {
   return `${value > 0 ? "+" : value < 0 ? "−" : ""}${formatValue(Math.abs(value))}`
 }
@@ -122,8 +138,9 @@ export function AutoresearchPane(): JSX.Element {
     const current = study()
     if (!current) return []
     const own = overview.latest
-    if (own && own.study.id === current.id) return own.runs
-    return (allRuns.latest ?? []).filter((run) => run.studyID === current.id)
+    const all =
+      own && own.study.id === current.id ? own.runs : (allRuns.latest ?? []).filter((run) => run.studyID === current.id)
+    return all.filter((run) => !launchFailed(run))
   })
   const loose = createMemo(() => (allRuns.latest ?? []).filter((run) => !run.studyID))
   const ordered = createMemo(() => [...runs()].sort((a, b) => a.createdAt - b.createdAt))
@@ -531,7 +548,7 @@ export function AutoresearchPane(): JSX.Element {
                     <Show when={runs().some((run) => run.status === "running")}>
                       <span>{runs().filter((run) => run.status === "running").length} live</span>
                     </Show>
-                    <span>{hours(current().createdAt, now())}</span>
+                    <Show when={computeTime(runs(), now())}>{(time) => <span>{time()}</span>}</Show>
                   </span>
                   <span class="ar-score__links">
                     <Button

@@ -721,7 +721,7 @@ export namespace Experiments {
    * creation. The hours the person agreed to are compute hours; writing the
    * harness and waiting for the dispatch approval are not among them. */
   export function clockStart(runs: readonly Run[]): number | undefined {
-    const starts = runs.flatMap((run) => (run.startedAt ? [run.startedAt] : []))
+    const starts = runs.flatMap((run) => (run.startedAt && !dispatchFailed(run) ? [run.startedAt] : []))
     return starts.length ? Math.min(...starts) : undefined
   }
 

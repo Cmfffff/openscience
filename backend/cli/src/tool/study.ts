@@ -312,7 +312,8 @@ export const StudyTool = Tool.define("study", {
             concurrency: current.concurrency,
             kill_criteria: current.killCriteria,
             budget: current.budget,
-            runs_completed: overview.runs.filter((run) => run.status !== "running").length,
+            runs_completed: overview.runs.filter((run) => run.status !== "running" && !Experiments.dispatchFailed(run))
+              .length,
             // Counted from the first run, like the budget: setup and approval time is not compute time.
             elapsed_hours: Number((Experiments.elapsedMs(overview.runs) / 3_600_000).toFixed(2)),
           },

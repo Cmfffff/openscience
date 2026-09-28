@@ -734,6 +734,51 @@ test("a study's runs ask under the study's approval, and a staged copy is refres
   })
 })
 
+test("a local study run whose code sits only in Project files is staged into scratch and runs there", async () => {
+  await using tmp = await tmpdir({ git: true })
+  const root = path.join(tmp.path, "compute")
+  const source = path.join(tmp.path, "titanic")
+  await fs.mkdir(source, { recursive: true })
+  await Bun.write(path.join(source, "train.py"), "open('score.txt', 'w').write('0.84')\nprint('VERSION 1')\n")
+  await Bun.write(path.join(source, "results.tsv"), "run\tscore\n")
+  await Instance.provide({
+    directory: tmp.path,
+    fn: async () => {
+      await trustProject()
+      const session = await Session.create({})
+      const workspace = await SessionFilesystem.workspace(session.id)
+      const tool = await createComputeJobTool({ root, workspace }).init()
+      const ctx = { ...context(session.id, []), extra: { studyApproval: "study:stu_1", studyStaging: "refresh" } }
+      const workload = {
+        name: "Titanic: baseline",
+        purpose: "Study run.",
+        command: "python3 train.py",
+        // The study tool names its root under Project files by absolute path.
+        cwd: source,
+        target: { kind: "local" as const },
+        exclude_uploads: ["results.tsv"],
+      }
+      const first = await tool.execute({ action: "start", ...workload }, ctx)
+      const job = first.metadata.job
+      if (!job) throw new Error("the local study run was not dispatched")
+      expect((await ComputeJobs.wait(job.id, { root, workspace, timeout: 10_000 })).status).toBe("succeeded")
+      expect(await ComputeJobs.log(job.id, { root, workspace })).toContain("VERSION 1")
+      const copy = path.join(workspace, "titanic")
+      expect(await Bun.file(path.join(copy, "score.txt")).text()).toBe("0.84")
+      // The ledger the study rewrites stays in the project, not in the copy.
+      expect(await Bun.file(path.join(copy, "results.tsv")).exists()).toBe(false)
+      // The next run gets the code the study just changed; earlier outputs stay.
+      await Bun.write(path.join(source, "train.py"), "print('VERSION 2')\n")
+      const second = await tool.execute({ action: "start", ...workload }, ctx)
+      const next = second.metadata.job
+      if (!next) throw new Error("the second local study run was not dispatched")
+      expect((await ComputeJobs.wait(next.id, { root, workspace, timeout: 10_000 })).status).toBe("succeeded")
+      expect(await ComputeJobs.log(next.id, { root, workspace })).toContain("VERSION 2")
+      expect(await Bun.file(path.join(copy, "score.txt")).exists()).toBe(true)
+    },
+  })
+}, 30_000)
+
 test("remote Project-files staging excludes symlinks, denied paths, and ignored large directories", async () => {
   if (process.platform === "win32") return
   await using tmp = await tmpdir({ git: true })

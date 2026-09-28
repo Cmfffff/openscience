@@ -3201,7 +3201,7 @@ export namespace SessionPrompt {
     if (!overview) return
     const queued = overview.ideas.filter((idea) => idea.status === "queued")
     const running = overview.runs.filter((run) => run.status === "running")
-    const done = overview.runs.filter((run) => run.status !== "running")
+    const done = overview.runs.filter((run) => run.status !== "running" && !Experiments.dispatchFailed(run))
     const value = (run: Experiments.Run | undefined) =>
       run ? `${run.name} (${study.metric} ${run.headline === null ? "n/a" : Experiments.format(run.headline)})` : "none"
     const budget = Object.entries(study.budget)
