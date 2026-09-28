@@ -464,3 +464,52 @@ test("subtask uploads reject unsupported forms and actual oversized bytes before
   expect(() => SubtaskAttachments.decode("data:text/plain,%ZZ")).toThrow("percent encoding")
   expect(() => SubtaskAttachments.decode("data:text/plain;base64,not-base64!")).toThrow("base64")
 })
+
+test("a document attached to a chat message is saved in the session workspace and the model is told where", async () => {
+  await using tmp = await tmpdir({ git: true, config: stressProviderConfig("http://127.0.0.1:1/v1") })
+  await Instance.provide({
+    directory: tmp.path,
+    init: trustProject,
+    fn: async () => {
+      const session = await Session.create({})
+      const bytes = Buffer.from("%PDF-1.4\n% synthesis matrix\n%%EOF\n")
+      const message = await SessionPrompt.prompt({
+        sessionID: session.id,
+        model,
+        agent: "research",
+        noReply: true,
+        parts: [
+          { type: "text", text: "Write the paper from my synthesis matrix." },
+          {
+            type: "file",
+            mime: "application/pdf",
+            filename: "synthesis matrix.pdf",
+            url: `data:application/pdf;base64,${bytes.toString("base64")}`,
+          },
+        ],
+      })
+      const parts = (await MessageV2.get({ sessionID: session.id, messageID: message.info.id })).parts
+      const note = parts.find(
+        (part): part is MessageV2.TextPart =>
+          part.type === "text" && !!part.synthetic && part.text.includes("saved at"),
+      )
+      expect(note?.text).toContain('"synthesis matrix.pdf"')
+      const saved = note!.text.match(/saved at (.+?\.pdf)\./)![1]!
+      expect(saved.startsWith(await SessionFilesystem.workspace(session.id))).toBe(true)
+      expect(Buffer.from(await Bun.file(saved).arrayBuffer()).equals(bytes)).toBe(true)
+      // The document itself still travels for routes that read it natively.
+      expect(parts.some((part) => part.type === "file" && part.mime === "application/pdf")).toBe(true)
+      // An image is sent as it was; nothing is written for it.
+      const pictured = await SessionPrompt.prompt({
+        sessionID: session.id,
+        model,
+        agent: "research",
+        noReply: true,
+        parts: [{ type: "file", mime: "image/png", filename: "plot.png", url: `data:image/png;base64,${image}` }],
+      })
+      const imageParts = (await MessageV2.get({ sessionID: session.id, messageID: pictured.info.id })).parts
+      expect(imageParts.some((part) => part.type === "text" && part.text.includes("saved at"))).toBe(false)
+      await Session.remove(session.id)
+    },
+  })
+}, 30_000)

@@ -213,4 +213,23 @@ describe("Literature.extract", () => {
     expect(extracted?.pages[1]).toContain("Results appear on page two")
     await fs.rm(dir, { recursive: true, force: true })
   })
+
+  test("reads the text with the bundled pdf.js on a machine with neither pdftotext nor python", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "lit-pdf-"))
+    const file = path.join(dir, "two-pages.pdf")
+    await Bun.write(file, tinyPDF(["Hello from page one", "Results appear on page two"]))
+    const original = process.env.PATH
+    process.env.PATH = dir
+    try {
+      expect(await Literature.extractor()).toBe("pdf.js")
+      const extracted = await Literature.extract(file)
+      expect(extracted?.tool).toBe("pdf.js")
+      expect(extracted?.pages).toHaveLength(2)
+      expect(extracted?.pages[0]).toContain("Hello from page one")
+      expect(extracted?.pages[1]).toContain("Results appear on page two")
+    } finally {
+      process.env.PATH = original
+      await fs.rm(dir, { recursive: true, force: true })
+    }
+  })
 })

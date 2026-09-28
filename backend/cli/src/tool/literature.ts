@@ -298,8 +298,8 @@ export const LiteratureTool = Tool.define("literature", {
           heading,
           ids,
           `Status: downloaded — ${loaded.pdf}`,
-          "No PDF text extractor is installed on this machine (pdftotext from poppler, or PyMuPDF for python3).",
-          "Install one (macOS: `brew install poppler`; Debian/Ubuntu: `apt-get install poppler-utils`) and call read again, or open the PDF with the read tool.",
+          "No text could be extracted from this PDF; it may be scanned pages with no text layer.",
+          "Open it with the read tool to see the pages, or run OCR on it before calling read again.",
         ].join("\n"),
         metadata: { status: "downloaded", path: loaded.pdf, truncated: false } as Record<string, unknown>,
       }

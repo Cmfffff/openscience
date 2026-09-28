@@ -2829,7 +2829,42 @@ export namespace SessionPrompt {
                   },
                 ]
               }
-              break
+              if (part.mime.startsWith("image/")) break
+              // An uploaded document lives only inside this message. Several
+              // routes take no documents (the managed gateway refuses them), and
+              // no tool can open bytes that are not on disk, so the model is told
+              // where a copy is saved and reads it like any other file.
+              return SubtaskAttachments.materialize(
+                [{ type: "file", mime: part.mime, filename: part.filename, url: part.url }],
+                input.sessionID,
+                preparation(input.sessionID)?.signal ?? new AbortController().signal,
+                "attachment",
+              )
+                .then(
+                  ([saved]) =>
+                    `saved at ${fileURLToPath(saved!.url)}. Read it with the read tool when its contents are needed.`,
+                )
+                .catch((error: unknown) => {
+                  assertPreparing(input.sessionID)
+                  log.warn("attachment not saved", { error })
+                  return `not saved to disk (${error instanceof Error ? error.message : String(error)}). Ask the user for a path or a text export if its contents are needed.`
+                })
+                .then((where) => [
+                  {
+                    id: Identifier.ascending("part"),
+                    messageID: info.id,
+                    sessionID: input.sessionID,
+                    type: "text" as const,
+                    synthetic: true,
+                    text: `The attached file ${part.filename ? `"${part.filename}"` : `(${part.mime})`} is ${where}`,
+                  },
+                  {
+                    ...part,
+                    id: part.id ?? Identifier.ascending("part"),
+                    messageID: info.id,
+                    sessionID: input.sessionID,
+                  },
+                ])
             case "file:": {
               log.info("file", { mime: part.mime })
               // have to normalize, symbol search returns absolute paths

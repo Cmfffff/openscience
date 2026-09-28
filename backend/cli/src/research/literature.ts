@@ -453,16 +453,27 @@ export namespace Literature {
   export interface Extracted {
     pages: string[]
     chars: number
-    tool: "pdftotext" | "pymupdf"
+    tool: "pdftotext" | "pymupdf" | "pdf.js"
   }
 
-  /** Which PDF text extractor this machine offers, if any. */
-  export async function extractor(): Promise<Extracted["tool"] | undefined> {
-    if (Bun.which("pdftotext")) return "pdftotext"
-    const python = Bun.which("python3") ?? Bun.which("python")
-    if (!python) return undefined
+  /** Which PDF text extractor to use: a local one when this machine has it
+   * (better layout on columns and tables), otherwise the bundled pdf.js, so a
+   * route that takes no PDF input can still read a document's text. */
+  export async function extractor(): Promise<Extracted["tool"]> {
+    const which = (command: string) => Bun.which(command, { PATH: process.env.PATH ?? "" })
+    if (which("pdftotext")) return "pdftotext"
+    const python = which("python3") ?? which("python")
+    if (!python) return "pdf.js"
     const probe = Bun.spawn([python, "-c", "import fitz"], { stdout: "ignore", stderr: "ignore" })
-    return (await probe.exited) === 0 ? "pymupdf" : undefined
+    return (await probe.exited) === 0 ? "pymupdf" : "pdf.js"
+  }
+
+  async function bundled(pdf: string, signal?: AbortSignal): Promise<string[]> {
+    const { extractText, getDocumentProxy } = await import("unpdf")
+    signal?.throwIfAborted()
+    const document = await getDocumentProxy(new Uint8Array(await Bun.file(pdf).arrayBuffer()))
+    signal?.throwIfAborted()
+    return (await extractText(document, { mergePages: false })).text
   }
 
   const PYMUPDF = [
@@ -473,7 +484,11 @@ export namespace Literature {
 
   export async function extract(pdf: string, signal?: AbortSignal): Promise<Extracted | undefined> {
     const tool = await extractor()
-    if (!tool) return undefined
+    if (tool === "pdf.js") {
+      const pages = (await bundled(pdf, signal)).map((page) => page.replace(/[ \t]+\n/g, "\n").trim())
+      while (pages.length && !pages[pages.length - 1]) pages.pop()
+      return { pages, chars: pages.reduce((sum, page) => sum + page.length, 0), tool }
+    }
     const command =
       tool === "pdftotext"
         ? ["pdftotext", "-enc", "UTF-8", pdf, "-"]

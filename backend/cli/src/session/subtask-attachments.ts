@@ -108,6 +108,7 @@ export namespace SubtaskAttachments {
     attachments: MessageV2.SubtaskAttachment[],
     sessionID: string,
     signal: AbortSignal,
+    prefix = ".task-attachment",
   ) {
     const result: MessageV2.SubtaskAttachment[] = []
     let size = 0
@@ -130,7 +131,7 @@ export namespace SubtaskAttachments {
       const target = await AuthoritySignal.exclusive(async () => {
         signal.throwIfAborted()
         const workspace = await SessionFilesystem.workspace(sessionID)
-        const destination = path.join(workspace, `.task-attachment-${index}-${digest.slice(0, 16)}-${filename}`)
+        const destination = path.join(workspace, `${prefix}-${index}-${digest.slice(0, 16)}-${filename}`)
         const previous = await SafeFileIO.optional(destination, { maxBytes: LIMIT })
         signal.throwIfAborted()
         if (previous) {

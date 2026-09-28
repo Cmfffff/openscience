@@ -307,6 +307,14 @@ public 50 the old detector named an example's `samples.csv` and the input
 
 ### Fixed
 
+- **The agent can read a PDF you attach to a message.** An attached document
+  existed only inside the message, and Ace models take no PDF input, so the
+  agent was told to read "the file on disk" that did not exist and ended up
+  asking for a path. An attached PDF, Word or spreadsheet file is now saved to
+  the session's workspace and the agent is told where, so it reads the text
+  with its read tool; routes that accept documents still receive the file too.
+  PDF text extraction no longer needs poppler or PyMuPDF on the machine: a
+  bundled pdf.js reads the text when neither is installed.
 - **A dropped connection no longer pauses an Ace turn after a minute.** A
   turn checks the Wallet balance before it sends anything, and a check that
   could not reach the Wallet spent the five quick retries meant for provider

@@ -144,7 +144,9 @@ terms of use and licensing; users are responsible for complying with the terms
 of any data source they query.
 
 Client-side rendering libraries (Mol*, igv.js, RDKit.js, KaTeX, pdf.js, 3Dmol.js)
-are dependencies declared in package.json and retain their own licenses.
+are dependencies declared in package.json and retain their own licenses. The CLI
+binary bundles unpdf (MIT) and the build of pdf.js (Apache-2.0) it ships, for PDF
+text extraction; both retain their own licenses.
 
 Fonts
 -----

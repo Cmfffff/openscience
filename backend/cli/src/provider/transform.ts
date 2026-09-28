@@ -315,7 +315,7 @@ export namespace ProviderTransform {
     }
     return {
       type: "text",
-      text: `[Attached file ${name} (${mime}) is binary and can't be shown inline. If its contents are needed, ask the user to paste them or read it from .context/.]`,
+      text: `[Attached file ${name} (${mime}) is binary and can't be shown inline. If its contents are needed, open the saved copy this message names; if no copy is named, ask the user to paste them.]`,
     }
   }
 
@@ -370,7 +370,7 @@ export namespace ProviderTransform {
         if (managed && modality === "pdf")
           return {
             type: "text" as const,
-            text: `[Attached PDF ${name} cannot be sent to this model as a document. If its contents are needed, extract the text locally from the file on disk (for example with the liteparse skill's \`lit\` CLI) and read the result, or ask the user for its path or a text export.]`,
+            text: `[Attached PDF ${name} cannot be sent to this model as a document. If its contents are needed, read the saved copy this message names with the read tool, which extracts the text; if no copy is named, ask the user for its path or a text export.]`,
           }
         return {
           type: "text" as const,

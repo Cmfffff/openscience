@@ -59,7 +59,7 @@ test("Ace models advertise only the inputs the gateway envelope carries, and a P
         const content = messages[0].content as Array<{ type: string; text?: string }>
         expect(content.map((part) => part.type)).toEqual(["text", "text", "image"])
         expect(content[1].text).toContain('"paper.pdf"')
-        expect(content[1].text).toContain("extract the text locally")
+        expect(content[1].text).toContain("read the saved copy")
         expect(content[1].text).not.toContain("ERROR")
         // A text-only route still refuses an image as before.
         const nemotron = provider.models["nvidia/nemotron-3-ultra-550b-a55b"]

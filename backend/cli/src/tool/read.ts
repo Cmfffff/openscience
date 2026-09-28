@@ -17,7 +17,7 @@ import { Literature } from "../research/literature"
 const MAX_PDF_TEXT_CHARS = 24_000
 
 /** The document's text for the result body: page-marked, bounded, or nothing
- * when no extractor is installed or extraction fails. */
+ * when the PDF has no text layer or extraction fails. */
 async function pdfText(filepath: string, signal?: AbortSignal) {
   const extracted = await Literature.extract(filepath, signal).catch(() => undefined)
   if (!extracted || !extracted.pages.length) return undefined
@@ -255,8 +255,8 @@ export const ReadTool = Tool.define("read", {
         ? text
           ? `PDF read successfully: ${text.pages} page${text.pages === 1 ? "" : "s"}, ${text.chars.toLocaleString()} characters of text extracted with ${text.tool}.${attachable ? "" : ` ${MessageV2.oversizedPdfNote(pdfPages)}`}`
           : attachable
-            ? "PDF attached. No text was extracted: no PDF text extractor is installed (pdftotext from poppler, or PyMuPDF via `pip install pymupdf`). Use `literature read` on the file for passages by query once one is installed."
-            : `No text was extracted: no PDF text extractor is installed (pdftotext from poppler, or PyMuPDF via \`pip install pymupdf\`). ${MessageV2.oversizedPdfNote(pdfPages)}`
+            ? "PDF attached. No text could be extracted; it may be scanned pages with no text layer."
+            : `No text could be extracted; it may be scanned pages with no text layer. ${MessageV2.oversizedPdfNote(pdfPages)}`
         : dims
           ? `Image read successfully: ${dims.width}×${dims.height} ${mime.replace("image/", "").toUpperCase()}, ${Math.max(1, Math.round(fileBytes.byteLength / 1024))} KB.`
           : `${kind} read successfully`
