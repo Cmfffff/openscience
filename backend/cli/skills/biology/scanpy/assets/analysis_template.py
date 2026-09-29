@@ -153,8 +153,9 @@ sc.pp.normalize_total(adata, target_sum=1e4)
 # Log-transform
 sc.pp.log1p(adata)
 
-# Store log-normalized data for plotting and marker visualization
-adata.layers['log1p'] = adata.X.copy()
+# Keep log-normalized values for every gene: feature selection below subsets
+# adata to highly variable genes, and marker plots still need the rest
+adata.raw = adata
 
 # ============================================================================
 # 4. FEATURE SELECTION
@@ -281,9 +282,9 @@ marker_genes = {
 
 # Visualize marker genes
 for cell_type, genes in marker_genes.items():
-    available_genes = [g for g in genes if g in adata.var_names]
+    available_genes = [g for g in genes if g in adata.raw.var_names]
     if available_genes:
-        sc.pl.umap(adata, color=available_genes, layer='log1p',
+        sc.pl.umap(adata, color=available_genes, use_raw=True,
                    save=f'_{cell_type.replace(" ", "_")}')
 
 # Manual annotation based on marker expression (customize this mapping)

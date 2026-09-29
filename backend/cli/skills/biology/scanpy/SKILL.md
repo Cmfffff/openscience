@@ -74,6 +74,7 @@ adata.var        # Gene metadata (DataFrame)
 adata.uns        # Unstructured annotations (dict)
 adata.obsm       # Multi-dimensional cell data (PCA, UMAP)
 adata.layers     # Alternative matrices, e.g. counts before normalization
+adata.raw        # Log-normalized values for all genes, kept before feature selection
 
 # Access cell and gene names
 adata.obs_names  # Cell barcodes
@@ -120,8 +121,9 @@ sc.pp.normalize_total(adata, target_sum=1e4)
 # Log-transform
 sc.pp.log1p(adata)
 
-# Optionally store log-normalized values for plotting
-adata.layers['log1p'] = adata.X.copy()
+# Keep log-normalized values for every gene: the subset to highly variable genes
+# below drops the rest, and marker plots still need them
+adata.raw = adata
 
 # Identify highly variable genes
 sc.pp.highly_variable_genes(adata, n_top_genes=2000)
@@ -189,8 +191,8 @@ markers = sc.get.rank_genes_groups_df(adata, group='0')
 marker_genes = ['CD3D', 'CD14', 'MS4A1', 'NKG7', 'FCGR3A']
 
 # Visualize markers
-sc.pl.umap(adata, color=marker_genes, layer='log1p')
-sc.pl.dotplot(adata, var_names=marker_genes, groupby='leiden', layer='log1p')
+sc.pl.umap(adata, color=marker_genes, use_raw=True)
+sc.pl.dotplot(adata, var_names=marker_genes, groupby='leiden', use_raw=True)
 
 # Manual annotation
 cluster_to_celltype = {
@@ -315,7 +317,7 @@ sc.pp.combat(adata, key='batch')
 3. **Use Leiden over Louvain**: More efficient and better results
 4. **Try multiple clustering resolutions**: Find optimal granularity
 5. **Validate cell type annotations**: Use multiple marker genes
-6. **Use explicit layers for expression plots**: For example, `layer='log1p'` for log-normalized values
+6. **Use `use_raw=True` for marker plots after subsetting**: `adata.raw` holds log-normalized values for every gene, including those outside the highly variable set
 7. **Check PCA variance ratio**: Determine optimal number of PCs
 8. **Save intermediate results**: Long workflows can fail partway through
 

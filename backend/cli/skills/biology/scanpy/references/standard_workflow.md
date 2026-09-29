@@ -53,8 +53,8 @@ sc.pp.normalize_total(adata, target_sum=1e4)
 # Log-transform the data
 sc.pp.log1p(adata)
 
-# Optionally preserve log-normalized values for plotting
-adata.layers['log1p'] = adata.X.copy()
+# Keep log-normalized values for every gene before subsetting to highly variable genes
+adata.raw = adata
 ```
 
 ### 4. Feature Selection

@@ -216,7 +216,7 @@ adata.uns                  # Unstructured annotations (dict)
 adata.obsm                 # Multi-dimensional cell annotations (e.g., PCA, UMAP)
 adata.varm                 # Multi-dimensional gene annotations
 adata.layers               # Additional data layers
-adata.layers               # Alternative matrices, e.g. counts before normalization
+adata.raw                  # Log-normalized values for all genes, kept before feature selection
 
 # Access
 adata.obs_names            # Cell barcodes
